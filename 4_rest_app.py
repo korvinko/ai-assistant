@@ -159,15 +159,19 @@ class ChatRequest(BaseModel):
 @app.post("/v1/chat/completions")
 async def ollamaChat(request: ChatRequest):
     try:
-        # Convert messages to a single string
         messages = request.messages
-        formatted_prompt = "\n".join([f"{msg.role}: {msg.content}" for msg in messages])
+        latest_user_message = next((msg.content for msg in reversed(messages) if msg.role == "user"), None)
+
+        if not latest_user_message:
+            raise HTTPException(status_code=400, detail="No user messages found in the request.")
 
         retriever = vc.as_retriever()
-        docs = await retriever.ainvoke(formatted_prompt)
+        docs = await retriever.ainvoke(latest_user_message)
         context = "\n\n".join([doc.page_content for doc in docs])
 
-        final_prompt = QA_CHAIN_PROMPT.format(context=context, question=formatted_prompt)
+         # Format the final prompt with the latest user message, combined with context
+        final_prompt = QA_CHAIN_PROMPT.format(context=context, question=latest_user_message)
+
 
         async def event_stream():
             async for chunk in llm.astream(final_prompt):
