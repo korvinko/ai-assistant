@@ -1,9 +1,7 @@
-import json
-import time
 import nest_asyncio
 from langchain_ollama.llms import OllamaLLM
 from langchain_core.prompts import PromptTemplate
-from libs.storage import get_vector_store
+from libs.storage import get_vector_store, rerank_documents
 from dotenv import load_dotenv
 import os
 import asyncio
@@ -49,6 +47,7 @@ async def main():
 
         retriever = vs.as_retriever()
         docs = await retriever.ainvoke(formatted_prompt)
+        docs = await rerank_documents(docs)
         context = "\n\n".join([doc.page_content for doc in docs])
 
         final_prompt = QA_CHAIN_PROMPT.format(context=context, question=formatted_prompt)

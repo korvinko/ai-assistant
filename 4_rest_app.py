@@ -6,7 +6,7 @@ from langchain.chains import RetrievalQA
 from langchain_core.prompts import PromptTemplate
 from fastapi.responses import HTMLResponse, JSONResponse
 import markdown
-from libs.storage import get_vector_store
+from libs.storage import get_vector_store, rerank_documents
 from dotenv import load_dotenv
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -167,6 +167,7 @@ async def ollamaChat(request: ChatRequest):
 
         retriever = vc.as_retriever()
         docs = await retriever.ainvoke(latest_user_message)
+        docs = await rerank_documents(docs)
         context = "\n\n".join([doc.page_content for doc in docs])
 
          # Format the final prompt with the latest user message, combined with context
