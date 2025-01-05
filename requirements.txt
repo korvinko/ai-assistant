@@ -2,6 +2,7 @@ uvicorn==0.34.0
 python-dotenv==1.0.1
 fastapi==0.115.6
 langchain-community==0.3.12
+langchain-ollama==0.2.2
 beautifulsoup4==4.12.3
 playwright==1.49.1
 lancedb==0.17.0
