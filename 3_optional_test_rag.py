@@ -1,12 +1,15 @@
 import json
 import time
-import asyncio
+import nest_asyncio
 from langchain_ollama.llms import OllamaLLM
 from langchain_core.prompts import PromptTemplate
 from libs.storage import get_vector_store
 from dotenv import load_dotenv
 import os
+import asyncio
 from pydantic import BaseModel
+
+nest_asyncio.apply()
 
 load_dotenv()
 
@@ -57,5 +60,8 @@ async def main():
         print(f"Error: {e}")
 
 
-if __name__ == "__main__":
+loop = asyncio.get_event_loop()
+if loop.is_running():
+    asyncio.ensure_future(main())
+else:
     asyncio.run(main())
