@@ -55,11 +55,3 @@ def cleanup_vector_store():
     except Exception as e:
         print(e)
         pass
-
-
-# Add the reranker function
-async def rerank_documents(docs):
-    # Example reranking logic (sort by some relevance score, assumed to be present in doc.metadata)
-    # Replace with your actual reranker logic
-    sorted_docs = sorted(docs, key=lambda doc: doc.metadata.get('relevance', 0), reverse=True)
-    return sorted_docs

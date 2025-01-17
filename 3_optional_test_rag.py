@@ -39,15 +39,19 @@ llm = OllamaLLM(
     temperature=0.1,
 )
 
+number_of_docs = 5
+number_of_reranked_docs = 2
+
 async def main():
     try:
 
         messages = [Message(role="user", content=query)]
         formatted_prompt = "\n".join([f"{msg.role}: {msg.content}" for msg in messages])
+        storage_query = "\n".join([f"{msg.content}" for msg in messages])
 
-        retriever = vs.as_retriever()
-        docs = await retriever.ainvoke(formatted_prompt)
-        docs = await rerank_documents(docs)
+        retriever = vs.as_retriever(search_kwargs={"k": number_of_docs})
+        docs = retriever.invoke(storage_query)
+        docs = rerank_documents(docs, storage_query, llm, number_of_reranked_docs)
         context = "\n\n".join([doc.page_content for doc in docs])
 
         final_prompt = QA_CHAIN_PROMPT.format(context=context, question=formatted_prompt)

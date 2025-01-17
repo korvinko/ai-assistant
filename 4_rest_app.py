@@ -6,7 +6,8 @@ from langchain.chains import RetrievalQA
 from langchain_core.prompts import PromptTemplate
 from fastapi.responses import HTMLResponse, JSONResponse
 import markdown
-from libs.storage import get_vector_store, rerank_documents
+from libs.storage import get_vector_store
+from libs.rerank import rerank_documents
 from dotenv import load_dotenv
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,6 +20,9 @@ from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse
 import json
 import time
+
+number_of_docs = 5
+number_of_reranked_docs = 2
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -46,7 +50,7 @@ class QueryRequest(BaseModel):
     historyKey: str
 
 # Define the prompt template
-template = """Use the following pieces of context to answer the question at the end. If you don't know the answer, just say that you don't know; don't try to make up an answer. Be as concise as possible, but provide all details if the user asks.
+template = """Be as concise as possible, but provide all details if the user asks.
 {context}
 Question: {question}. This question is related to the service zendit.io. Provide the URL to the documentation next to the provided information. Return output in markdown format.
 Helpful Answer:"""
@@ -167,12 +171,11 @@ async def ollamaChat(request: ChatRequest):
 
         retriever = vc.as_retriever()
         docs = await retriever.ainvoke(latest_user_message)
-        docs = await rerank_documents(docs)
+        docs = rerank_documents(docs, latest_user_message, llm, number_of_reranked_docs)
         context = "\n\n".join([doc.page_content for doc in docs])
 
          # Format the final prompt with the latest user message, combined with context
         final_prompt = QA_CHAIN_PROMPT.format(context=context, question=latest_user_message)
-
 
         async def event_stream():
             async for chunk in llm.astream(final_prompt):
